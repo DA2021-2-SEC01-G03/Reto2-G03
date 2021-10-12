@@ -5,6 +5,7 @@ import config as cf
 import sys
 import controller
 from DISClib.ADT import list as lt
+from DISClib.ADT import map
 assert cf
 
 def initCatalog():
@@ -271,7 +272,9 @@ def newExposition():
  
 
 
-
+def artworksByNationality(catalog, nationality):
+    artworksAmount = controller.artworksByNationality(catalog, nationality)
+    print("There are " + str(artworksAmount) + " artworks in the " + str(nationality) + " nationality")
 
 
     
@@ -287,6 +290,7 @@ def printMenu():
     print("5- Nationalitys with most artworks")
     print("6- Artworks cost by department")
     print("7- New exposition in a range of dates and an available area")
+    print("8- Number of artworks by Nationality")
     print("0- Salir")
 
 catalog = None
@@ -294,7 +298,7 @@ catalog = None
 while True:
     printMenu()
     inputs = input('Select an option to continue\n')
-    if int(inputs[0]) == 1:
+    if int(inputs) == 1:
         print("Loading files information ....")
         catalog = initCatalog()
         loadData(catalog)
@@ -303,46 +307,54 @@ while True:
         
 
 
-    elif int(inputs[0]) == 2:
+    elif int(inputs) == 2:
         date01 = int(input('First year (YYYY) '))
         date02 = int(input('Last year (YYYY) '))
         artistsByDates()
 
-    elif int(inputs[0]) == 3:
+    elif int(inputs) == 3:
         date01 = int(input('First Date (AAAAMMDD) '))
         date02 = int(input('Last Date  (AAAAMMDD) '))
         artworksByDateAquired()     
 
-    elif int(inputs[0]) == 4:
+    elif int(inputs) == 4:
         artist = input("Enter the artist name ")
         artworkArtistByTechnique()
 
 
-    elif int(inputs[0]) == 5:
+    elif int(inputs) == 5:
         byNationality()
     
 
-    elif int(inputs[0]) == 6:
+    elif int(inputs) == 6:
         department = input("Enter department ")
         transportCostByDepartment()
 
     
     
-    elif int(inputs[0]) == 7:
+    elif int(inputs) == 7:
         date1 = int(input("Enter first year (YYYY) "))
         date2 = int(input("Enter last year (YYYY) "))
         area = int(input("Enter the available area in m^2 "))
         newExposition()
 
     
-    elif int(inputs[0]) == 8:
-        print(catalog['medium'])   
+    elif int(inputs) == 8:
+        nationality = input("Enter nationality ")
+        artworksByNationality(catalog, nationality)  
 
     
-    elif int(inputs[0]) == 9:
-        medio = input('Ingrese el medio: ') 
-        obras = int(input('Ingrese el número de obras: '))
-    
+    elif int(inputs) == 9:
+        print(catalog['artworks'])
+
+    elif int(inputs) == 10:
+        print(catalog['Medium']) 
+
+    elif int(inputs) == 11:
+        print(catalog['Nationality'])       
+
+    elif int(inputs) == 12:
+        print(catalog['artists'])     
         
 
     else:

@@ -1,71 +1,100 @@
 ﻿
 from DISClib.DataStructures.arraylist import isPresent
+from DISClib.DataStructures.chaininghashtable import keySet
 import config as cf
 import operator
-from DISClib.ADT import map 
 from DISClib.ADT import list as lt
 from DISClib.Algorithms.Sorting import shellsort as sa
 from DISClib.Algorithms.Sorting import mergesort as ms
+from DISClib.ADT import map 
 assert cf
 
 # Construccion de modelos
 
-def newCatalog(): 
+def newCatalog():
    
     catalog = {'artists': None,
                'artworks': None,
+               'Medium': None,
+               'Nationality': None
                }
 
-    catalog['artists'] = lt.newList('ARRAY_LIST',cmpfunction= compareIDs)
-    catalog['artworks'] = lt.newList('ARRAY_LIST')
-    catalog['medium'] = map.newMap()
+    catalog['artists'] = map.newMap(maptype='PROBING', numelements= 24000, loadfactor= 0.9)
+    catalog['artworks'] = map.newMap(maptype='PROBING', numelements= 250000, loadfactor= 0.9)
+    catalog['Medium'] = map.newMap(maptype= 'PROBING', numelements= 250000, loadfactor= 0.9)
+    catalog['Nationality'] = map.newMap(maptype= 'PROBING', numelements= 250000, loadfactor= 0.9)
+   
     return catalog
 
 # Funciones para agregar informacion al catalogo
 
 def addArtist(catalog, artist):
-
-    lt.addLast(catalog['artists'], artist)
+    map.put(catalog['artists'], artist['ConstituentID'], artist)
     
      
-
 def addArtwork(catalog, artwork):
-
-    lt.addLast(catalog['artworks'], artwork)
+    map.put(catalog['artworks'], artwork['ObjectID'], artwork)
     constituents = artwork['ConstituentID'][1:][:-1].split(",")
     artwork['Constituents'] = constituents
     if artwork['Height (cm)'] != '' and artwork['Width (cm)'] != '' and artwork['Depth (cm)'] == '' and artwork['Length (cm)'] == '':
        artwork['Area'] = (float(artwork['Height (cm)']) * float(artwork['Width (cm)']))/100   
     else:
-        artwork['Area'] = 0 
+        artwork['Area'] = 0    
 
-def addMedium(catalog, medium):
-    map.put(catalog['medium'] , map.size(catalog['medium']) + 1, medium )
-
-
-def obras_mas_antiguas(catalog, obras, medio):
-    
-
-
-             
 
 def loadArtistsNames(catalog):
-    for artworks in lt.iterator(catalog['artworks']):
-       artworks['ArtistsNames'] = []
-       artworks['Nationality'] = []
-       constituents = artworks['Constituents']  
-       i = 0
-       tam = len(constituents)
-       while i < tam:
-           pos = lt.isPresent(catalog['artists'],constituents[i])
-           artist = lt.getElement(catalog['artists'],pos)
-           artworks['ArtistsNames'].append(artist['DisplayName'])
-           artworks['Nationality'].append(artist['Nationality'])
-           i += 1
+    artworks = catalog['artworks']
+    artists = catalog['artists']
+    listArtworks = map.keySet(artworks)
+    for key in lt.iterator(listArtworks):
+        artwork = map.get(artworks, key)['value']
+        constituents = artwork['Constituents']
+        artwork['ArtistsNames'] = []
+        artwork['Nationality'] = []        
+        tamConstituents = len(constituents)
+        i = 0
+        while i < tamConstituents:
+           artist = map.get(artists, constituents[i])
+           if artist == None:
+              artwork['ArtistsNames'] = []
+              artwork['Nationality'] = []  
+           else:   
+              artwork['ArtistsNames'].append(artist['value']['DisplayName'])   
+              artwork['Nationality'].append(artist['value']['Nationality'])  
+           i += 1 
+
+
+def addMedium(catalog, artwork):
+    Map = catalog['Medium']
+    if map.contains(Map, artwork['Medium']):
+      bucket = map.get(Map, artwork['Medium'])['value']
+      lt.addLast(bucket, artwork)
+      map.put(Map, artwork['Medium'], bucket)
+    else:     
+      bucket = lt.newList('ARRAY_LIST')  
+      lt.addLast(bucket, artwork)      
+      map.put(Map, artwork['Medium'], bucket)
            
+def loadNationalities(catalog):
+    mapNationality = catalog['Nationality']
+    artworks = catalog['artworks']
+    listArtworks = map.keySet(artworks)
+    for key in lt.iterator(listArtworks):
+        artwork = map.get(artworks, key)['value']
+        nationalities = artwork['Nationality']
+        tamNationalities = len(nationalities)
+        i = 0
+        while i < tamNationalities:
+            if map.contains(mapNationality, nationalities[i]):
+              bucket = map.get(mapNationality, nationalities[i])['value']
+              lt.addLast(bucket, artwork)
+              map.put(mapNationality, nationalities[i], bucket)
+            else:  
+              bucket = lt.newList('ARRAY_LIST')  
+              map.put(mapNationality, nationalities[i], bucket)
+            i += 1
+    
 
-
-                
     
 
 
@@ -75,7 +104,6 @@ def loadArtistsNames(catalog):
 # Funciones de consulta
 
 def artistsByDates(catalog, date1:int, date2:int):
-
     list = lt.newList()
     artists = catalog['artists']
     i = 1
@@ -136,27 +164,10 @@ def artworkArtistByTechnique(catalog,artist):
 
 
 
-def artworksByNacionality(catalog):
-    artworks = catalog['artworks']
-    nationalitysHistogram = {}
-    for artwork in lt.iterator(artworks):
-        i = 0
-        tam = len(artwork['Nationality'])
-        while i < tam:
-            nationality = artwork['Nationality'][i]
-            nationalitysHistogram[nationality] = 0
-            i += 1
-    for artwork in lt.iterator(artworks):
-        tam2 = len(artwork['Nationality'])        
-        j = 0    
-        while j < tam2:
-            nationality = artwork['Nationality'][j]
-            nationalitysHistogram[nationality] += 1 
-            j += 1    
-            
-    sortedDict = sorted(nationalitysHistogram.items(), key=operator.itemgetter(1))        
-
-    return sortedDict
+def artworksByNationality(catalog, nationality):
+    artworks = map.get(catalog['Nationality'], nationality)['value']
+    amount = lt.size(artworks)
+    return amount
 
 
 
