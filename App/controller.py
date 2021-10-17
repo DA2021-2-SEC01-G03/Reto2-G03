@@ -39,6 +39,7 @@ def loadArtworks(catalog):
     for artwork in input_file:
         model.addArtwork(catalog, artwork)
         model.addMedium(catalog, artwork)
+        model.addDepartment(catalog, artwork)
        
     
     
@@ -57,7 +58,13 @@ def sortArtistsBeginDate(catalog):
     model.sortArtistsBeginDate(catalog)
 
 def sortArtworksDateAquired(catalog):
-    model.sortArtworksDateAquired(catalog)  
+    model.sortArtworksDateAquired(catalog) 
+
+def sortArtistByTechnique(catalog):
+     model.sortArtistByTechnique(catalog)    
+
+def sortNationalities(catalog):
+    model.sortNationalities(catalog)     
 
 def sortArtworksCost(list):
     model.sortArtworksCost(list)
@@ -77,11 +84,11 @@ def artworksByDates(catalog,date1,date2):
 def artworkArtistByTechnique(catalog,artist):
     return model.artworkArtistByTechnique(catalog,artist)
 
-def artworksByNationality(catalog, nationality):
-    return model.artworksByNationality(catalog, nationality)    
+def artworksByNationality(catalog):
+    return model.artworksByNationality(catalog)    
 
-def objectsByNacionality(catalog,nationality):
-    return model.objectsOfNacionality(catalog,nationality)  
+def artworksOfNacionality(catalog,nationality):
+    return model.artworksOfNacionality(catalog,nationality)  
 
 def transportCostByDepartment(catalog,department):
     return model.transportCostByDepartment(catalog,department)  

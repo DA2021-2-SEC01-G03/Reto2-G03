@@ -1,6 +1,6 @@
 ﻿
 from DISClib.DataStructures.arraylist import isPresent
-from DISClib.DataStructures.chaininghashtable import keySet
+from DISClib.DataStructures.chaininghashtable import keySet, valueSet
 import config as cf
 import operator
 from DISClib.ADT import list as lt
@@ -16,13 +16,15 @@ def newCatalog():
     catalog = {'artists': None,
                'artworks': None,
                'Medium': None,
-               'Nationality': None
+               'Nationality': None,
+               'Department': None
                }
 
-    catalog['artists'] = map.newMap(maptype='PROBING', numelements= 24000, loadfactor= 0.9)
-    catalog['artworks'] = map.newMap(maptype='PROBING', numelements= 250000, loadfactor= 0.9)
-    catalog['Medium'] = map.newMap(maptype= 'PROBING', numelements= 250000, loadfactor= 0.9)
-    catalog['Nationality'] = map.newMap(maptype= 'PROBING', numelements= 250000, loadfactor= 0.9)
+    catalog['artists'] = map.newMap(maptype='PROBING', numelements= 30000, loadfactor= 0.5)
+    catalog['artworks'] = map.newMap(maptype='PROBING', numelements= 280000, loadfactor= 0.5)
+    catalog['Medium'] = map.newMap(maptype= 'PROBING', numelements= 280000, loadfactor= 0.5)
+    catalog['Nationality'] = map.newMap(maptype= 'PROBING', numelements= 280000, loadfactor= 0.5)
+    catalog['Department'] = map.newMap(maptype= 'PROBING', numelements= 280000, loadfactor= 0.5)
    
     return catalog
 
@@ -35,11 +37,7 @@ def addArtist(catalog, artist):
 def addArtwork(catalog, artwork):
     map.put(catalog['artworks'], artwork['ObjectID'], artwork)
     constituents = artwork['ConstituentID'][1:][:-1].split(",")
-    artwork['Constituents'] = constituents
-    if artwork['Height (cm)'] != '' and artwork['Width (cm)'] != '' and artwork['Depth (cm)'] == '' and artwork['Length (cm)'] == '':
-       artwork['Area'] = (float(artwork['Height (cm)']) * float(artwork['Width (cm)']))/100   
-    else:
-        artwork['Area'] = 0    
+    artwork['Constituents'] = constituents   
 
 
 def loadArtistsNames(catalog):
@@ -74,6 +72,19 @@ def addMedium(catalog, artwork):
       bucket = lt.newList('ARRAY_LIST')  
       lt.addLast(bucket, artwork)      
       map.put(Map, artwork['Medium'], bucket)
+
+
+def addDepartment(catalog, artwork):
+    Map = catalog['Department']   
+    if map.contains(Map, artwork['Department']):
+      bucket = map.get(Map, artwork['Department'])['value']
+      lt.addLast(bucket, artwork)
+      map.put(Map, artwork['Department'], bucket)
+    else:     
+      bucket = lt.newList('ARRAY_LIST')  
+      lt.addLast(bucket, artwork)      
+      map.put(Map, artwork['Department'], bucket)
+
            
 def loadNationalities(catalog):
     mapNationality = catalog['Nationality']
@@ -90,7 +101,8 @@ def loadNationalities(catalog):
               lt.addLast(bucket, artwork)
               map.put(mapNationality, nationalities[i], bucket)
             else:  
-              bucket = lt.newList('ARRAY_LIST')  
+              bucket = lt.newList('ARRAY_LIST') 
+              lt.addLast(bucket, artwork) 
               map.put(mapNationality, nationalities[i], bucket)
             i += 1
     
@@ -104,152 +116,120 @@ def loadNationalities(catalog):
 # Funciones de consulta
 
 def artistsByDates(catalog, date1:int, date2:int):
-    list = lt.newList()
+    list = lt.newList('ARRAY_LIST')
     artists = catalog['artists']
     i = 1
-    tam = lt.size(artists)
+    values = map.valueSet(artists)
     count = 1
-    while i < tam:
-      dict = lt.getElement(artists, i)
-      if (int(dict['BeginDate']) >= date1) and (int(dict['BeginDate']) <= date2):
-          lt.addLast(list, dict)
+    for artist in lt.iterator(values):
+       if (int(artist['BeginDate']) >= date1) and (int(artist['BeginDate']) <= date2):
+          lt.addLast(list, artist)
           count += 1
-      i += 1
+       i += 1
+     
     return (list,count)
 
 
 
 def artworksByDates(catalog, date1, date2):
-    list = lt.newList()
+    list = lt.newList('ARRAY_LIST')
     artworks = catalog['artworks']
-    i = 1
-    tam = lt.size(artworks)
+    values = map.valueSet(artworks)
     count = 0
-    while i < tam:
-      dict = lt.getElement(artworks, i) 
-      DateInt = becomeDateAquiredToInt(dict['DateAcquired'])
+    for artwork in lt.iterator(values):
+      DateInt = becomeDateAquiredToInt(artwork['DateAcquired'])
       if DateInt > date1 and DateInt < date2:
-         lt.addLast(list, dict)
-         count += 1   
-      i += 1           
-
+         lt.addLast(list, artwork)
+         count += 1           
     return (list,count)               
 
 
 
-def artworkArtistByTechnique(catalog,artist):
-    artistHistogramTechnique = {}
+def artworkArtistByTechnique(catalog,artistName):
     idArtist = ""
     countPieces = 0
     countTechnique = 0
+    counter = map.newMap()
+    
+    artists = map.valueSet(catalog['artists'])
+    for artist in lt.iterator(artists):
+        if artist['DisplayName'] == artistName:
+           idArtist = artist['ConstituentID'] 
+           break
 
-    for artist1 in lt.iterator(catalog['artists']):
-            if artist1['DisplayName'] == artist:
-                idArtist = artist1['ConstituentID']
-                break
-    for artwork in lt.iterator(catalog['artworks']):
-            if artist in artwork['ArtistsNames']:              
-                technique = artwork['Medium']
-                artistHistogramTechnique[technique] = 0
+    artworks = map.valueSet(catalog['artworks'])
+    for artwork in lt.iterator(artworks):
+        if artistName in artwork['ArtistsNames']:
+            technique = artwork['Medium']
+            if map.contains(counter, technique):
+                newValue = map.get(counter, technique)['value']
+                newValue['Number of artworks'] += 1
+                map.put(counter, technique, newValue)
+                countPieces += 1
+            else:
+                newValue = {'technique': technique, 'Number of artworks': 1}
+                map.put(counter, technique, newValue)
                 countTechnique += 1
-    for artwork in lt.iterator(catalog['artworks']):
-            if artist in artwork['ArtistsNames']:               
-                technique = artwork['Medium']
-                artistHistogramTechnique[technique] += 1 
                 countPieces += 1
 
-    sortedDict = sorted(artistHistogramTechnique.items(), key=operator.itemgetter(1))            
+    list = map.valueSet(counter)            
+           
           
-    return sortedDict,idArtist,countPieces,countTechnique
+    return list,idArtist,countPieces,countTechnique
 
 
 
-def artworksByNationality(catalog, nationality):
-    artworks = map.get(catalog['Nationality'], nationality)['value']
-    amount = lt.size(artworks)
-    return amount
+def artworksByNationality(catalog):
+    list = lt.newList('ARRAY_LIST')
+    nationalities = catalog['Nationality']
+    listNationalities = map.keySet(nationalities)
+    for nationality in lt.iterator(listNationalities):
+        artworks = map.get(nationalities, nationality)['value']
+        amount = lt.size(artworks)
+        value = {'Nationality': nationality, 'Count': amount}
+        lt.addLast(list, value)
+
+    return list    
 
 
 
-def objectsOfNacionality(catalog,Nationality):
-    artworks = catalog['artworks']
-    listNationality = lt.newList()
-    for artwork in lt.iterator(artworks):
-        if Nationality in artwork['Nationality']:
-            lt.addLast(listNationality, artwork)
+def artworksOfNacionality(catalog,Nationality):
+    listNationality = map.get(catalog['Nationality'], Nationality)['value']
 
     return listNationality        
 
 
 
 def transportCostByDepartment(catalog,department):
-    artworks = catalog['artworks']
-    listArtworks = lt.newList()
+    departmentList = map.get(catalog['Department'], department)['value']
     costsSum = 0
-    weightsSum = 0
-    for artwork in lt.iterator(artworks):
-        if artwork['Department'] == department:
-           finalCost = 0
-
-           if artwork['Weight (kg)'] != "":
-            weight = float(artwork['Weight (kg)'])
-            costWeight = 72/weight
-           else:
-            costWeight = 0  
-            weight = 0
-
-           if artwork['Height (cm)'] != "":
-            height = float(artwork['Height (cm)']) 
-           else: 
-            height = 0
-
-           if artwork['Width (cm)'] != "":
-            width = float(artwork['Width (cm)'])     
-           else:
-            width = 0
-
-           if artwork['Depth (cm)']: 
-            depth = float(artwork['Depth (cm)'])
-           else: 
-            depth = 0
-
-
-           costMettersSquared = 0
-           costMettersCubed = 0
-           if height != 0 and width != 0 and depth != 0:
-              costMettersCubed = 72 / ((width*height*depth)/100)
-           if height != 0 and width != 0:   
-              costMettersSquared = 72 / ((width*height)/100)
-
-           if costWeight == 0 and costMettersCubed == 0 and costMettersSquared == 0:
-              finalCost = 42
-           elif costWeight > costMettersCubed and costWeight > costMettersSquared:
-              finalCost = costWeight
-           elif costMettersCubed > costWeight and costMettersCubed > costMettersSquared:
-              finalCost = costMettersCubed
-           elif costMettersSquared > costWeight and costMettersSquared > costMettersCubed:
-               finalCost = costMettersSquared
-               artwork['Area'] = (width*height)/100
-
-           artwork['cost'] = finalCost         
-           costsSum += finalCost
-           weightsSum += weight
-
-           lt.addLast(listArtworks, artwork)    
-
-    return ((listArtworks),costsSum,weightsSum)
-
-def newExposition(catalog,date1,date2,area):
-    artworks = catalog['artworks']
-    Exposition = lt.newList()
-    for artwork in lt.iterator(artworks):
-        if artwork['Date'] != "" and len(artwork['Date']) == 4 and artwork['Date'] != "n.d."  and artwork['Area'] > 0 :
-            if int(artwork['Date']) >= date1 and int(artwork['Date']) <= date2:
-                lt.addLast(Exposition,artwork)
-
-    return Exposition
-
+    weightsSum = 0 
+    costKg = 0
+    costM2 = 0
+    costM3 = 0 
     
+    for artwork in lt.iterator(departmentList):
+        if artwork['Weight (kg)'] != '0' and artwork['Weight (kg)'] != '':
+           costKg = 72.00 / float(artwork['Weight (kg)'])
+           weightsSum += costKg
+        if artwork['Height (cm)'] != '0' and artwork['Height (cm)'] != '' and artwork['Width (cm)'] != '0' and artwork['Width (cm)'] != '':  
+           costM2 = 72.00 / (float(artwork['Height (cm)'])/100 * float(artwork['Width (cm)'])/100)
+        if artwork['Height (cm)'] != '0' and artwork['Height (cm)'] != '' and artwork['Width (cm)'] != '0' and artwork['Width (cm)'] != '' and artwork['Length (cm)'] != '0' and artwork['Length (cm)'] != '':   
+           costM3 = 72.00 / (float(artwork['Height (cm)'])/100 * float(artwork['Width (cm)'])/100 * float(artwork['Length (cm)'])/100)
+
+        list = [costKg,costM2,costM3]
+        maxCost = max(list)
+        if maxCost <= 0:
+            finalCost = 48
+        else:
+            finalCost = maxCost
+
+        artwork['cost'] = finalCost
+        costsSum += finalCost
+                         
+
+    return (departmentList,costsSum,weightsSum)
+
 
 # Funciones utilizadas para comparar elementos dentro de una lista
 
@@ -264,6 +244,12 @@ def compareDatesAquired(artwork1, artwork2):
     intDate2 = becomeDateAquiredToInt(date2)
 
     return intDate1 < intDate2
+
+def compareTechnique(technique1, technique2):
+    return int(technique1['Number of artworks']) > int(technique2['Number of artworks'])
+
+def compareNationalities(nationality1, nationality2):
+    return int(nationality1['Count']) > int(nationality2['Count'])    
 
 def compareCost(artwork1,artwork2):
     return int(artwork1['cost']) < int(artwork2['cost'])    
@@ -280,8 +266,6 @@ def compareDate(artwork1,artwork2):
     else:
         date2 = artwork2['Date']        
 
-
-
     return int(date1) < int(date2) 
     
 def compareIDs(authorname1, author):
@@ -291,17 +275,23 @@ def compareIDs(authorname1, author):
 
 # Funciones de ordenamiento
 
-def sortArtistsBeginDate(catalog):
-    sa.sort(catalog['artists'], compareBeginDates)
+def sortArtistsBeginDate(list):
+    sa.sort(list, compareBeginDates)
 
-def sortArtworksDateAquired(catalog):
-    ms.sort(catalog['artworks'], compareDatesAquired)
+def sortArtworksDateAquired(list):
+    ms.sort(list, compareDatesAquired)
+
+def sortArtistByTechnique(list):
+    ms.sort(list, compareTechnique)   
+
+def sortNationalities(list):
+    ms.sort(list, compareNationalities)     
 
 def sortArtworksCost(list):
-    ms.sort(list,compareCost) 
+    ms.sort(list, compareCost) 
 
 def sortArtworksDate(list):
-    ms.sort(list,compareDate)        
+    ms.sort(list, compareDate)        
 
 #Auxiliar functions
 

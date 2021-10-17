@@ -1,6 +1,5 @@
 ﻿
 from operator import ne
-from typing import OrderedDict
 import config as cf
 import sys
 import controller
@@ -22,15 +21,17 @@ def loadData(catalog):
 
 
 def artistsByDates():
-    controller.sortArtistsBeginDate(catalog)
+    
     list = controller.artistsByDates(catalog,date01,date02)[0]
+    count = controller.artistsByDates(catalog,date01,date02)[1]
+    controller.sortArtistsBeginDate(list)
 
     sizeList = lt.size(list)
  
     if sizeList:
       first3 = lt.subList(list,1,3)
       last3 = lt.subList(list,sizeList-3,3) 
-      print("There are " + str(controller.artistsByDates(catalog,date01,date02)[1]) + " artists born between " + str(date01) + " and " + str(date02))
+      print("There are " + str(count) + " artists born between " + str(date01) + " and " + str(date02))
       print("")
       print("The first and last 3 artists in the range are...")  
       for artist in lt.iterator(first3):
@@ -49,14 +50,14 @@ def artistsByDates():
       
                   
     else:
-        print("No se encontraron artistas")                        
+        print("No se encontraron artistas")                       
            
 #New Function
 
 def artworksByDateAquired():
-    controller.sortArtworksDateAquired(catalog)
     list = controller.artworksByDates(catalog,date01,date02)[0]
     count = controller.artworksByDates(catalog,date01,date02)[1]
+    controller.sortArtworksDateAquired(list)
     
     sizeList = lt.size(list)
  
@@ -88,9 +89,10 @@ def artworksByDateAquired():
     else:
         print("No se encontraron artistas") 
 
+#New Function
 
 def artworkArtistByTechnique():
-    orderedDict = controller.artworkArtistByTechnique(catalog,artist)[0]
+    list = controller.artworkArtistByTechnique(catalog,artist)[0]
     idArtist = controller.artworkArtistByTechnique(catalog,artist)[1]
     countPieces = controller.artworkArtistByTechnique(catalog,artist)[2]
     countTechnique = controller.artworkArtistByTechnique(catalog,artist)[3]
@@ -99,68 +101,64 @@ def artworkArtistByTechnique():
     print(artist + " with MoMA ID " + idArtist + " has " + str(countPieces) + " pieces in her/his name at the museum.")
     print("There are " + str(countTechnique) + " diferent mediums/techniques in her/his work")
     print("")
+    
 
     if countTechnique > 0:
      print("Her/his top 5 medium/technique are...")
-
+     controller.sortArtistByTechnique(list)
+     if lt.size(list) >= 5:
+       first5 = lt.subList(list, 1, 5)
+       for value in lt.iterator(first5):
+           print( 'MediumName: ' + str(value['technique']) + ', count: ' + str(value['Number of artworks']) )
     
-     tam = len(orderedDict)
-     if tam < 6:
-        i = tam-1
-        while i >= 0:
-            print(orderedDict[i])
-            i -= 1 
      else:
-        j = len(orderedDict)-6
-        i = len(orderedDict)-1
-        while i >= j :
-            print(orderedDict[i])
-            i -= 1
-            
+       for value in lt.iterator(list):
+           print( 'MediumName: ' + str(value['technique']) + ', count: ' + str(value['Number of artworks']) )
+      
+     mostUsed = lt.firstElement(list)   
 
-     
-     sampleList = [] 
-     k = 0
-     for artwork in lt.iterator(catalog['artworks']):
-         if artwork['Medium'] == orderedDict[tam-1][0] and artist in artwork['ArtistsNames']: 
-            sampleList.append(artwork)
-            k += 1
-            if k == 3:
-                break   
+     techniqueBucket = map.get(catalog['Medium'], mostUsed['technique'])['value']
+     sample = lt.newList('ARRAY_LIST')
+     count = 0
+     for artwork in lt.iterator(techniqueBucket):
+         if count >= 3:
+             break
+         if artist in artwork['ArtistsNames']:
+            lt.addLast(sample, artwork) 
+            count += 1
 
-     print("")
-     print("Her/his most used medium/technique is " + orderedDict[tam-1][0] + " with " + str(orderedDict[tam-1][1]) + " pieces")
-     print("A sample of 3 " + orderedDict[tam-1][0] + " form the collection are...")   
+    print("")
+    print("Her/his most used medium/technique is " + str(mostUsed['technique']) + " with " + str(mostUsed['Number of artworks']) + " pieces")
+    print("A sample of 3 " + str(mostUsed['technique']) + " form the collection are...")
+    print("")
+    for artwork in lt.iterator(sample):
+        print('ObjectID: ' + artwork['ObjectID'] + ',  Title: ' +
+             artwork['Title']  +  ', Medium: ' + artwork['Medium'] + ', Date: ' + artwork['Date'] +
+             ', Dimensions: ' + artwork['Dimensions'] + ', Department: ' 
+             + artwork['Department'] +  ', Classification: ' + artwork['Classification'] + 
+             ', URL: ' + artwork['URL'])
 
-     taml = len(sampleList)
-     z = 0
-     while z < taml:
-         print("Object ID: " + sampleList[z]['ObjectID'] + ", Title: " + sampleList[z]['Title'] + 
-               ", Medium: " + sampleList[z]['Medium'] + ", Date: " + sampleList[z]['Date'] + ", Dimensions: " 
-               + sampleList[z]['Dimensions'])
-         z += 1      
+
+
 
 
 #New Function
 def byNationality():
 
-    listNationalitys = controller.artworksByNationality(catalog)
+    listNationalities = controller.artworksByNationality(catalog)
+    controller.sortNationalities(listNationalities)
+    top10 = lt.subList(listNationalities, 1, 10)
+    topNationality = lt.firstElement(listNationalities)
     print("The TOP 10 countries in the MoMA are...")
-    if len(listNationalitys) > 10:
-     tam2 = len(listNationalitys)-1
-     i = len(listNationalitys)-11    
-     while tam2 >= i:
-        print(listNationalitys[tam2])
-        tam2 -= 1
-    else:
-        print(listNationalitys)    
+    for nationality in lt.iterator(top10):
+        print( 'Nationality: ' + str(nationality['Nationality']) + ', Artworks: ' + str(nationality['Count']) )
 
-    print("The top Nationality in the museum is: " + str(listNationalitys[len(listNationalitys)-1][0]) + " with " + str(listNationalitys[len(listNationalitys)-1][1]) + " unique pieces" )
+    print("The top Nationality in the museum is " + str(topNationality['Nationality']) + " with " + str(topNationality['Count']) + " unique pieces" )
     
-    print("The first and last 3 objects in the " + str(listNationalitys[len(listNationalitys)-1][0]) + " artwork list are...")
+    print("The first and last 3 objects in the " + str(topNationality['Nationality']) + " artwork list are...")
     print("")
     
-    artworksNationality = controller.objectsByNacionality(catalog,str(listNationalitys[len(listNationalitys)-1][0]))
+    artworksNationality = controller.artworksOfNacionality(catalog, topNationality['Nationality'])
     sizeList = lt.size(artworksNationality)
 
     first3 = lt.subList(artworksNationality,sizeList-2,3)
@@ -194,9 +192,9 @@ def transportCostByDepartment():
     print("Estimated cargo weight (kg): " + str(round(totalWeight,2)))
     print("Estimated cargo cost (USD): " + str(round(totalCost,2)))
 
-
+     
+    controller.sortArtworksCost(list) 
     top5Expensive = lt.subList(list,lt.size(list)-5,5)
-    controller.sortArtworksCost(list)
 
     print("")
     print("The most 5 expensive items to transport are...")
@@ -225,59 +223,6 @@ def transportCostByDepartment():
         
 
     
-    
-def newExposition():
-    list = controller.newExposition(catalog,date1,date2,area)
-    print("The MoMA is going to exhibit pieces from " + str(date1) + " to " + str(date2) )
-    print("There are " + str(lt.size(list)) + " possible items in a available area of " + str(area) + " m^2") 
-    
-    listExposition = lt.newList()
-    maxArea = 0
-    for artwork in lt.iterator(list):
-        if artwork['Area'] + maxArea < area:
-            maxArea += artwork['Area']
-            lt.addLast(listExposition,artwork)
-
-    maxArea = round(maxArea,2)        
-
-    print("The possible exhibit has " + str(lt.size(listExposition)) + " items" )   
-    print("Filling " + str(maxArea) + " m^2 of the " + str(area) + " m^2 available")
-    print("")
-
-    print("The first and last 3 objects of the new exposition are...")
-    if lt.size(listExposition) <= 6:
-        for artwork1 in lt.iterator(listExposition):
-            print('ObjectID: ' + artwork1['ObjectID'] + ', Title: ' + artwork1['Title'] +
-            ', ArtistsNames: ' + str(artwork['ArtistsNames']) +
-              ', Medium: ' + artwork['Medium'] + ', Date: ' + artwork['Date'] +
-             ', Dimensions: ' + artwork['Dimensions'] +  ', Classification: ' + artwork['Classification'] + 
-               ', Estimated area: ' + str(artwork['Area']) + ', URL: ' + artwork['URL']) 
-    
-    else:
-        first3 = lt.subList(listExposition,1,3)
-        last3 = lt.subList(listExposition,len(listExposition)-2,3)
-        for artwork1 in lt.iterator(first3):
-            print('ObjectID: ' + artwork1['ObjectID'] + ', Title: ' + artwork1['Title'] +
-            ', ArtistsNames: ' + str(artwork1['ArtistsNames']) +
-              ', Medium: ' + artwork1['Medium'] + ', Date: ' + artwork1['Date'] +
-             ', Dimensions: ' + artwork1['Dimensions'] +  ', Classification: ' + artwork1['Classification'] + 
-               ', Estimated area: ' + str(artwork1['Area']) + ', URL: ' + artwork1['URL']) 
-        print("")
-        for artwork1 in lt.iterator(last3):
-           print('ObjectID: ' + artwork1['ObjectID'] + ', Title: ' + artwork1['Title'] +
-            ', ArtistsNames: ' + str(artwork1['ArtistsNames']) +
-              ', Medium: ' + artwork1['Medium'] + ', Date: ' + artwork1['Date'] +
-             ', Dimensions: ' + artwork1['Dimensions'] +  ', Classification: ' + artwork1['Classification'] + 
-               ', Estimated area: ' + str(artwork1['Area']) + ', URL: ' + artwork1['URL'])      
- 
-
-
-def artworksByNationality(catalog, nationality):
-    artworksAmount = controller.artworksByNationality(catalog, nationality)
-    print("There are " + str(artworksAmount) + " artworks in the " + str(nationality) + " nationality")
-
-
-    
 #Menu
 
 
@@ -289,8 +234,7 @@ def printMenu():
     print("4- Artworks of an artist by technique") 
     print("5- Nationalitys with most artworks")
     print("6- Artworks cost by department")
-    print("7- New exposition in a range of dates and an available area")
-    print("8- Number of artworks by Nationality")
+    print("7- Most prolific artists")
     print("0- Salir")
 
 catalog = None
@@ -333,15 +277,11 @@ while True:
     
     
     elif int(inputs) == 7:
-        date1 = int(input("Enter first year (YYYY) "))
-        date2 = int(input("Enter last year (YYYY) "))
-        area = int(input("Enter the available area in m^2 "))
-        newExposition()
+        artistsAmount = int(input("Enter the amount of artist to show "))
+        date1 = int(input("Enter initial year (YYYY) "))
+        date2 = int(input("Enter final year (YYYY) "))
 
-    
-    elif int(inputs) == 8:
-        nationality = input("Enter nationality ")
-        artworksByNationality(catalog, nationality)  
+
 
     
     elif int(inputs) == 9:
