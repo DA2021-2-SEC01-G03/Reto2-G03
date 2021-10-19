@@ -234,7 +234,6 @@ def printMenu():
     print("4- Artworks of an artist by technique") 
     print("5- Nationalitys with most artworks")
     print("6- Artworks cost by department")
-    print("7- Most prolific artists")
     print("0- Salir")
 
 catalog = None
@@ -273,29 +272,6 @@ while True:
     elif int(inputs) == 6:
         department = input("Enter department ")
         transportCostByDepartment()
-
-    
-    
-    elif int(inputs) == 7:
-        artistsAmount = int(input("Enter the amount of artist to show "))
-        date1 = int(input("Enter initial year (YYYY) "))
-        date2 = int(input("Enter final year (YYYY) "))
-
-
-
-    
-    elif int(inputs) == 9:
-        print(catalog['artworks'])
-
-    elif int(inputs) == 10:
-        print(catalog['Medium']) 
-
-    elif int(inputs) == 11:
-        print(catalog['Nationality'])       
-
-    elif int(inputs) == 12:
-        print(catalog['artists'])     
-        
 
     else:
         sys.exit(0)

@@ -92,6 +92,3 @@ def artworksOfNacionality(catalog,nationality):
 
 def transportCostByDepartment(catalog,department):
     return model.transportCostByDepartment(catalog,department)  
-
-def newExposition(catalog,date1,date2,area):
-    return model.newExposition(catalog,date1,date2,area)        

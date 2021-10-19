@@ -118,14 +118,12 @@ def loadNationalities(catalog):
 def artistsByDates(catalog, date1:int, date2:int):
     list = lt.newList('ARRAY_LIST')
     artists = catalog['artists']
-    i = 1
     values = map.valueSet(artists)
     count = 1
     for artist in lt.iterator(values):
        if (int(artist['BeginDate']) >= date1) and (int(artist['BeginDate']) <= date2):
           lt.addLast(list, artist)
           count += 1
-       i += 1
      
     return (list,count)
 
@@ -210,12 +208,12 @@ def transportCostByDepartment(catalog,department):
     
     for artwork in lt.iterator(departmentList):
         if artwork['Weight (kg)'] != '0' and artwork['Weight (kg)'] != '':
-           costKg = 72.00 / float(artwork['Weight (kg)'])
+           costKg = 72.00 * float(artwork['Weight (kg)'])
            weightsSum += costKg
         if artwork['Height (cm)'] != '0' and artwork['Height (cm)'] != '' and artwork['Width (cm)'] != '0' and artwork['Width (cm)'] != '':  
-           costM2 = 72.00 / (float(artwork['Height (cm)'])/100 * float(artwork['Width (cm)'])/100)
+           costM2 = 72.00 * (float(artwork['Height (cm)'])/100 * float(artwork['Width (cm)'])/100)
         if artwork['Height (cm)'] != '0' and artwork['Height (cm)'] != '' and artwork['Width (cm)'] != '0' and artwork['Width (cm)'] != '' and artwork['Length (cm)'] != '0' and artwork['Length (cm)'] != '':   
-           costM3 = 72.00 / (float(artwork['Height (cm)'])/100 * float(artwork['Width (cm)'])/100 * float(artwork['Length (cm)'])/100)
+           costM3 = 72.00 * (float(artwork['Height (cm)'])/100 * float(artwork['Width (cm)'])/100 * float(artwork['Length (cm)'])/100)
 
         list = [costKg,costM2,costM3]
         maxCost = max(list)
